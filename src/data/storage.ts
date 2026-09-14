@@ -30,7 +30,7 @@ const STORAGE_KEYS = {
  * Bumped to v7 to synchronize rounded whole ₹10 menu item prices
  * across the entire MEZBAAN catalog.
  */
-export const ROOM_DB_VERSION = 7;
+export const ROOM_DB_VERSION = 8;
 export const DB_VERSION_KEY = 'mezban_room_db_version';
 
 /**
@@ -45,6 +45,7 @@ export function seedMenu(destructive: boolean = false): {
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
     localStorage.removeItem(STORAGE_KEYS.MENU_ITEMS);
     localStorage.removeItem(STORAGE_KEYS.BILLS);
+    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify([]));
   }
 
   localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
@@ -328,14 +329,14 @@ export function getBills(): BillWithItems[] {
   const data = localStorage.getItem(STORAGE_KEYS.BILLS);
   if (!data) {
     const samples = generateSampleWeeklyBills();
-    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify(samples));
-    return samples;
+    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify([]));
+    return [];
   }
   const parsed: BillWithItems[] = JSON.parse(data);
   if (!Array.isArray(parsed) || parsed.length === 0) {
     const samples = generateSampleWeeklyBills();
-    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify(samples));
-    return samples;
+    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify([]));
+    return [];
   }
   return parsed;
 }
