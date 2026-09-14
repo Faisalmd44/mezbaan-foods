@@ -1,0 +1,6 @@
+{
+  "name": "Mezbaan POS",
+  "description": "Fast food restaurant Point of Sale (POS) system with menu management, billing, thermal receipts, and sales tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
