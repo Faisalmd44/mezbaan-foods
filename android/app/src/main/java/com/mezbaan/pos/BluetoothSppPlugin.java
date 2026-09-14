@@ -91,7 +91,7 @@ public class BluetoothSppPlugin extends Plugin {
         result.put("granted", denied.isEmpty());
         try {
             result.put("denied", new JSArray(denied));
-        } catch (JSONException e) {
+        } catch (Exception e) {
             result.put("denied", new JSArray());
         }
         call.resolve(result);
@@ -282,7 +282,7 @@ public class BluetoothSppPlugin extends Plugin {
             result.put("success", true);
             result.put("message", "Printed " + bytes.length + " bytes");
             call.resolve(result);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             call.reject("Invalid data format: " + e.getMessage());
         } catch (IOException e) {
             Log.e(TAG, "Print failed", e);
