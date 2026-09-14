@@ -282,9 +282,8 @@ public class BluetoothSppPlugin extends Plugin {
             result.put("success", true);
             result.put("message", "Printed " + bytes.length + " bytes");
             call.resolve(result);
-        } catch (Exception e) {
-            call.reject("Invalid data format: " + e.getMessage());
         } catch (IOException e) {
+            call.reject("Print failed: " + e.getMessage());
             Log.e(TAG, "Print failed", e);
             closeConnection();
             call.reject("Print failed: " + e.getMessage());
