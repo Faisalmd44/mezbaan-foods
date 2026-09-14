@@ -1,8 +1,38 @@
-node_modules
-dist
-.env
-.env.local
-*.log
+# dependencies
+node_modules/
+
+# expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macos
 .DS_Store
-.gradle
-build
+*.pem
+
+# local env files
+.env*.local
+.env
+
+# bolt
+.bolt/
+
+# typescript
+*.tsbuildinfo
