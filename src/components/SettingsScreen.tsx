@@ -177,7 +177,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 aria-hidden="true"
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
                   gstEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`
+                }`}
               />
             </button>
           </div>

@@ -140,7 +140,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <Icon
                 className={`w-5 h-5 transition-colors ${
                   isSelected ? 'text-[#FF6B35]' : 'text-[#6B6B75]'
-                }`
+                }`}
               />
               <span className="text-[11px] sm:text-xs">{label}</span>
             </button>
