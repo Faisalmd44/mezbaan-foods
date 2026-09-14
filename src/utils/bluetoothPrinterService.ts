@@ -1,15 +1,15 @@
 import { ReceiptData, PaperWidth } from '../types';
 import { formatPrice, formatDateTime } from './format';
 import { ESCPOS_LOGO_58, ESCPOS_LOGO_80 } from './thermalLogo';
+import BluetoothSppPlugin, { isBluetoothPluginAvailable } from '../plugins/BluetoothSppPlugin';
 
 export interface BluetoothPrinter {
   id: string;
   name: string;
+  address: string;
   paperWidth: PaperWidth;
   isConnected: boolean;
   isPaired: boolean;
-  address?: string;
-  batteryLevel?: number;
   lastConnected?: number;
 }
 
@@ -21,57 +21,17 @@ export interface PrinterServiceState {
 }
 
 const STORAGE_KEYS = {
-  PRINTER_LIST: 'mezbaan_bluetooth_printers',
   ACTIVE_PRINTER_ID: 'mezbaan_active_printer_id',
   AUTO_PRINT: 'mezbaan_auto_print_order',
   DEFAULT_WIDTH: 'mezbaan_default_paper_width'
 };
 
-const DEFAULT_PRINTERS: BluetoothPrinter[] = [
-  {
-    id: 'mpt-ii-58',
-    name: 'MPT-II (58mm Mini Thermal)',
-    paperWidth: 'MM58',
-    isConnected: true,
-    isPaired: true,
-    address: '00:11:22:33:44:55',
-    batteryLevel: 92
-  },
-  {
-    id: 'pos-58-bt',
-    name: 'POS-58 Bluetooth Thermal',
-    paperWidth: 'MM58',
-    isConnected: false,
-    isPaired: true,
-    address: '66:77:88:99:AA:BB',
-    batteryLevel: 80
-  },
-  {
-    id: 'rpp02n-58',
-    name: 'RPP02N Mobile POS Printer',
-    paperWidth: 'MM58',
-    isConnected: false,
-    isPaired: true,
-    address: 'CC:DD:EE:FF:00:11',
-    batteryLevel: 65
-  },
-  {
-    id: 'rpp300-80',
-    name: 'RPP300 (80mm Desktop BT)',
-    paperWidth: 'MM80',
-    isConnected: false,
-    isPaired: true,
-    address: '22:33:44:55:66:77'
-  },
-  {
-    id: 'epson-tm-80',
-    name: 'Epson TM-T88 / Everycom 80mm',
-    paperWidth: 'MM80',
-    isConnected: false,
-    isPaired: true,
-    address: '88:99:AA:BB:CC:DD'
+function getPlugin(): any {
+  if (isBluetoothPluginAvailable()) {
+    return BluetoothSppPlugin;
   }
-];
+  return null;
+}
 
 class BluetoothPrinterService {
   private activePrinter: BluetoothPrinter | null = null;
@@ -79,8 +39,6 @@ class BluetoothPrinterService {
   private autoPrintOnOrder: boolean = false;
   private defaultPaperWidth: PaperWidth = 'MM58';
   private listeners: Set<() => void> = new Set();
-  private gattDevice: any = null;
-  private gattCharacteristic: any = null;
 
   constructor() {
     this.loadState();
@@ -88,24 +46,6 @@ class BluetoothPrinterService {
 
   private loadState() {
     try {
-      const savedList = localStorage.getItem(STORAGE_KEYS.PRINTER_LIST);
-      if (savedList) {
-        this.savedPrinters = JSON.parse(savedList);
-      } else {
-        this.savedPrinters = DEFAULT_PRINTERS;
-        this.savePrinters();
-      }
-
-      const activeId = localStorage.getItem(STORAGE_KEYS.ACTIVE_PRINTER_ID);
-      if (activeId) {
-        this.activePrinter = this.savedPrinters.find(p => p.id === activeId) || this.savedPrinters[0];
-      } else {
-        this.activePrinter = this.savedPrinters[0];
-        if (this.activePrinter) {
-          localStorage.setItem(STORAGE_KEYS.ACTIVE_PRINTER_ID, this.activePrinter.id);
-        }
-      }
-
       const autoPrint = localStorage.getItem(STORAGE_KEYS.AUTO_PRINT);
       this.autoPrintOnOrder = autoPrint === 'true';
 
@@ -114,8 +54,7 @@ class BluetoothPrinterService {
         this.defaultPaperWidth = width;
       }
     } catch {
-      this.savedPrinters = DEFAULT_PRINTERS;
-      this.activePrinter = DEFAULT_PRINTERS[0];
+      // ignore
     }
   }
 
@@ -128,10 +67,6 @@ class BluetoothPrinterService {
     this.listeners.forEach(fn => fn());
   }
 
-  private savePrinters() {
-    localStorage.setItem(STORAGE_KEYS.PRINTER_LIST, JSON.stringify(this.savedPrinters));
-  }
-
   public getState(): PrinterServiceState {
     return {
       activePrinter: this.activePrinter,
@@ -141,16 +76,120 @@ class BluetoothPrinterService {
     };
   }
 
+  public isNativeAvailable(): boolean {
+    return getPlugin() !== null;
+  }
+
+  public async checkPermissions(): Promise<{ granted: boolean; denied: string[] }> {
+    const plugin = getPlugin();
+    if (!plugin) return { granted: false, denied: ['NATIVE_PLUGIN_UNAVAILABLE'] };
+    return plugin.checkPermissions();
+  }
+
+  public async requestPermissions(): Promise<{ granted: boolean; denied: string[] }> {
+    const plugin = getPlugin();
+    if (!plugin) return { granted: false, denied: ['NATIVE_PLUGIN_UNAVAILABLE'] };
+    return plugin.requestPermissions();
+  }
+
+  public async isBluetoothEnabled(): Promise<boolean> {
+    const plugin = getPlugin();
+    if (!plugin) return false;
+    const res = await plugin.isBluetoothEnabled();
+    return res.enabled;
+  }
+
+  public async enableBluetooth(): Promise<boolean> {
+    const plugin = getPlugin();
+    if (!plugin) return false;
+    const res = await plugin.enableBluetooth();
+    return res.enabled;
+  }
+
+  public async discoverPairedDevices(): Promise<BluetoothPrinter[]> {
+    const plugin = getPlugin();
+    if (!plugin) throw new Error('Bluetooth plugin not available. Run on Android device.');
+
+    const permRes = await plugin.requestPermissions();
+    if (!permRes.granted) {
+      throw new Error('Bluetooth permissions denied. Grant BLUETOOTH_SCAN and BLUETOOTH_CONNECT in Settings.');
+    }
+
+    const enabled = await plugin.isBluetoothEnabled();
+    if (!enabled) {
+      await plugin.enableBluetooth();
+      const recheck = await plugin.isBluetoothEnabled();
+      if (!recheck) {
+        throw new Error('Bluetooth is turned off. Turn on Bluetooth and try again.');
+      }
+    }
+
+    const res = await plugin.getPairedDevices();
+    this.savedPrinters = (res.devices || []).map((d: any) => ({
+      id: d.address,
+      name: d.name,
+      address: d.address,
+      paperWidth: this.defaultPaperWidth,
+      isConnected: false,
+      isPaired: true
+    }));
+
+    // Check if currently connected printer is still in the list
+    const activeId = localStorage.getItem(STORAGE_KEYS.ACTIVE_PRINTER_ID);
+    if (activeId) {
+      const found = this.savedPrinters.find(p => p.id === activeId);
+      if (found) {
+        const connRes = await plugin.isConnected();
+        found.isConnected = connRes.connected;
+        this.activePrinter = found;
+      }
+    }
+
+    this.notify();
+    return this.savedPrinters;
+  }
+
+  public async connectPrinter(address: string): Promise<{ success: boolean; message: string }> {
+    const plugin = getPlugin();
+    if (!plugin) throw new Error('Bluetooth plugin not available. Run on Android device.');
+
+    const res = await plugin.connect({ address });
+    if (res.connected) {
+      const printer = this.savedPrinters.find(p => p.address === address);
+      if (printer) {
+        this.savedPrinters = this.savedPrinters.map(p => ({
+          ...p,
+          isConnected: p.address === address
+        }));
+        this.activePrinter = { ...printer, isConnected: true, lastConnected: Date.now() };
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_PRINTER_ID, printer.id);
+        this.notify();
+      }
+      return { success: true, message: res.message };
+    }
+    return { success: false, message: 'Connection failed' };
+  }
+
+  public async disconnectPrinter(): Promise<void> {
+    const plugin = getPlugin();
+    if (plugin) {
+      await plugin.disconnect();
+    }
+    if (this.activePrinter) {
+      this.savedPrinters = this.savedPrinters.map(p => ({
+        ...p,
+        isConnected: false
+      }));
+      this.activePrinter = { ...this.activePrinter, isConnected: false };
+      this.notify();
+    }
+  }
+
   public setActivePrinter(printerId: string): void {
     const found = this.savedPrinters.find(p => p.id === printerId);
     if (found) {
-      this.savedPrinters = this.savedPrinters.map(p => ({
-        ...p,
-        isConnected: p.id === printerId
-      }));
-      this.activePrinter = { ...found, isConnected: true, lastConnected: Date.now() };
+      this.activePrinter = { ...found, lastConnected: Date.now() };
       localStorage.setItem(STORAGE_KEYS.ACTIVE_PRINTER_ID, printerId);
-      this.savePrinters();
       this.notify();
     }
   }
@@ -163,7 +202,6 @@ class BluetoothPrinterService {
       this.savedPrinters = this.savedPrinters.map(p =>
         p.id === this.activePrinter?.id ? { ...p, paperWidth: width } : p
       );
-      this.savePrinters();
     }
     this.notify();
   }
@@ -174,98 +212,6 @@ class BluetoothPrinterService {
     this.notify();
   }
 
-  public addPrinter(printer: Omit<BluetoothPrinter, 'isPaired'>): BluetoothPrinter {
-    const newPrinter: BluetoothPrinter = {
-      ...printer,
-      isPaired: true,
-      lastConnected: Date.now()
-    };
-    this.savedPrinters.push(newPrinter);
-    this.savePrinters();
-    this.setActivePrinter(newPrinter.id);
-    return newPrinter;
-  }
-
-  public isWebBluetoothAvailable(): boolean {
-    return typeof navigator !== 'undefined' && 'bluetooth' in navigator;
-  }
-
-  public isGattConnected(): boolean {
-    return Boolean(this.gattDevice?.gatt?.connected);
-  }
-
-  /**
-   * Scan for real Bluetooth thermal printers using Web Bluetooth API if available
-   */
-  public async scanForBluetoothDevice(): Promise<BluetoothPrinter | null> {
-    if (!this.isWebBluetoothAvailable()) {
-      throw new Error('Web Bluetooth is not supported in this browser environment. Using Paired POS device manager.');
-    }
-
-    try {
-      // @ts-ignore
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          '000018f0-0000-1000-8000-00805f9b34fb', // Standard ESC/POS
-          'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-          '49535343-fe7d-4ae5-8fa9-9fafd205e455' // ISSC Transparent
-        ]
-      });
-
-      if (!device) return null;
-
-      if (device.gatt) {
-        const server = await device.gatt.connect();
-        if (server) {
-          const services = await server.getPrimaryServices().catch(() => []);
-          for (const service of services) {
-            const characteristics = await service.getCharacteristics().catch(() => []);
-            const writable = characteristics.find(
-              (c: any) => c.properties?.write || c.properties?.writeWithoutResponse
-            );
-            if (writable) {
-              this.gattCharacteristic = writable;
-              break;
-            }
-          }
-        }
-      }
-      this.gattDevice = device;
-
-      const newPrinter: BluetoothPrinter = {
-        id: `bt-${device.id || Date.now()}`,
-        name: device.name || 'Bluetooth Thermal Printer',
-        paperWidth: this.defaultPaperWidth,
-        isConnected: true,
-        isPaired: true,
-        address: device.id,
-        lastConnected: Date.now()
-      };
-
-      // Add to list if not already there
-      const existingIdx = this.savedPrinters.findIndex(p => p.id === newPrinter.id || p.name === newPrinter.name);
-      if (existingIdx >= 0) {
-        this.savedPrinters[existingIdx] = { ...this.savedPrinters[existingIdx], isConnected: true };
-        this.activePrinter = this.savedPrinters[existingIdx];
-      } else {
-        this.savedPrinters.push(newPrinter);
-        this.activePrinter = newPrinter;
-      }
-      this.savePrinters();
-      this.notify();
-      return this.activePrinter;
-    } catch (err: any) {
-      if (err.name === 'NotFoundError') {
-        return null; // User cancelled prompt
-      }
-      throw err;
-    }
-  }
-
-  /**
-   * Build ESC/POS command buffer for thermal receipt
-   */
   public buildEscPosReceipt(receipt: ReceiptData, paperWidth: PaperWidth): Uint8Array {
     const is58 = paperWidth === 'MM58';
     const cols = is58 ? 32 : 48;
@@ -290,15 +236,10 @@ class BluetoothPrinterService {
       return left + ' '.repeat(spaceNeeded) + right;
     };
 
-    // 1. Initialize Printer (ESC @)
     addBytes(0x1B, 0x40);
-
-    // 2. Header: Centered Official MEZBAAN Logo
-    addBytes(0x1B, 0x61, 0x01); // Center align
+    addBytes(0x1B, 0x61, 0x01);
     const logoBytes = is58 ? ESCPOS_LOGO_58 : ESCPOS_LOGO_80;
-    for (let i = 0; i < logoBytes.length; i++) {
-      chunks.push(logoBytes[i]);
-    }
+    for (let i = 0; i < logoBytes.length; i++) chunks.push(logoBytes[i]);
     addLine('');
     addLine('Fast Food & Quick Bites');
     const gstinPrint = receipt.gstin !== undefined ? receipt.gstin.trim() : '07AAAAA0000A1Z5';
@@ -307,26 +248,21 @@ class BluetoothPrinterService {
     }
     addLine(doubleSep);
 
-    // 3. Bill Meta: Left Align
-    addBytes(0x1B, 0x61, 0x00); // Left align
+    addBytes(0x1B, 0x61, 0x00);
     addLine(formatCols(`Bill No: ${receipt.billNumber}`, formatDateTime(receipt.timestampMillis)));
     addLine(formatCols(`Cashier: ${receipt.staffName}`, `Mode: ${receipt.paymentMode}`));
     addLine(separator);
 
-    // 4. Line Items Header
-    addBytes(0x1B, 0x45, 0x01); // Bold
+    addBytes(0x1B, 0x45, 0x01);
     if (is58) {
-      // 32 columns: Item(16) Qty(4) Price(12)
       addLine(formatCols('Item (Qty)', 'Amount'));
     } else {
-      // 48 columns: Item (24) Qty(6) Rate(8) Amount(10)
       const colHead = 'Item'.padEnd(24) + 'Qty'.padEnd(6) + 'Rate'.padEnd(8) + 'Amount'.padStart(10);
       addLine(colHead);
     }
-    addBytes(0x1B, 0x45, 0x00); // Normal
+    addBytes(0x1B, 0x45, 0x00);
     addLine(separator);
 
-    // 5. Line Items Rows
     receipt.lines.forEach(item => {
       const priceStr = `Rs.${formatPrice(item.lineTotal)}`;
       if (is58) {
@@ -342,8 +278,6 @@ class BluetoothPrinterService {
     });
 
     addLine(separator);
-
-    // 6. Totals Section
     addLine(formatCols('Subtotal:', `Rs.${formatPrice(receipt.subtotal)}`));
     if (receipt.discountAmount > 0) {
       addLine(formatCols('Discount:', `-Rs.${formatPrice(receipt.discountAmount)}`));
@@ -355,14 +289,12 @@ class BluetoothPrinterService {
     }
     addLine(doubleSep);
 
-    // Grand Total: Bold
-    addBytes(0x1B, 0x45, 0x01); // Bold
-    addBytes(0x1B, 0x21, 0x10); // Double height
+    addBytes(0x1B, 0x45, 0x01);
+    addBytes(0x1B, 0x21, 0x10);
     addLine(formatCols('TOTAL AMOUNT:', `Rs.${formatPrice(receipt.total)}`));
-    addBytes(0x1B, 0x21, 0x00); // Normal
-    addBytes(0x1B, 0x45, 0x00); // Bold off
+    addBytes(0x1B, 0x21, 0x00);
+    addBytes(0x1B, 0x45, 0x00);
 
-    // 7. Payment Info
     if (receipt.paymentMode === 'CASH') {
       if (receipt.cashReceived != null) {
         addLine(formatCols('Cash Tendered:', `Rs.${formatPrice(receipt.cashReceived)}`));
@@ -374,63 +306,48 @@ class BluetoothPrinterService {
 
     addLine(separator);
 
-    // 8. Footer: Centered
-    addBytes(0x1B, 0x61, 0x01); // Center
+    addBytes(0x1B, 0x61, 0x01);
     addLine('Thank you for dining with MEZBAAN!');
     addLine('* * * HAVE A GREAT DAY * * *');
 
-    // 9. Feed & Cut
-    addBytes(0x1B, 0x64, 0x04); // Feed 4 lines
-    addBytes(0x1D, 0x56, 0x41, 0x00); // GS V 65 0 (Full Cut)
+    addBytes(0x1B, 0x64, 0x04);
+    addBytes(0x1D, 0x56, 0x41, 0x00);
 
     return new Uint8Array(chunks);
   }
 
-  /**
-   * Execute Bluetooth thermal print
-   */
   public async printReceipt(receipt: ReceiptData, paperWidth?: PaperWidth): Promise<{ success: boolean; message: string }> {
     const width = paperWidth || this.activePrinter?.paperWidth || this.defaultPaperWidth;
     const printerName = this.activePrinter ? this.activePrinter.name : 'Thermal Bluetooth Printer';
-    
-    // Generate ESC/POS commands
     const escposBytes = this.buildEscPosReceipt(receipt, width);
 
-    // Log diagnostic output
-    console.log(`[BluetoothPrinterService] Generating ESC/POS payload for ${printerName} (${width}): ${escposBytes.byteLength} bytes.`);
+    const plugin = getPlugin();
+    if (!plugin) {
+      throw new Error('Bluetooth printing requires the Android app. Run on a device with Bluetooth.');
+    }
 
-    // If connected to Web Bluetooth GATT
-    if (this.gattCharacteristic) {
-      try {
-        // Send in 128-byte packets
-        const chunkSize = 128;
-        for (let i = 0; i < escposBytes.length; i += chunkSize) {
-          const chunk = escposBytes.slice(i, i + chunkSize);
-          await this.gattCharacteristic.writeValue(chunk);
-        }
-        return {
-          success: true,
-          message: `Printed successfully to ${printerName} via Bluetooth!`
-        };
-      } catch (err: any) {
-        console.warn('GATT write error, falling back to simulated print:', err);
+    if (!this.activePrinter) {
+      throw new Error('No printer selected. Connect a printer first.');
+    }
+
+    const connCheck = await plugin.isConnected();
+    if (!connCheck.connected) {
+      const connRes = await plugin.connect({ address: this.activePrinter.address });
+      if (!connRes.connected) {
+        throw new Error(`Failed to connect to ${printerName}: ${connRes.message || ''}`);
       }
     }
 
-    // Default POS action: Trigger ESC/POS output event & browser print fallback
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          message: `Sent to ${printerName} (${width === 'MM58' ? '58mm' : '80mm'}) via Bluetooth ESC/POS!`
-        });
-      }, 500);
-    });
+    const data = Array.from(escposBytes);
+    const res = await plugin.printData({ data });
+    return {
+      success: res.success,
+      message: res.success
+        ? `Printed to ${printerName} (${width === 'MM58' ? '58mm' : '80mm'})`
+        : `Print failed: ${res.message}`
+    };
   }
 
-  /**
-   * Send test print to active printer
-   */
   public async printTestReceipt(): Promise<{ success: boolean; message: string }> {
     const mockReceipt: ReceiptData = {
       billNumber: 'TEST-0001',

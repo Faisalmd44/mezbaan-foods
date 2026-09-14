@@ -28,6 +28,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
   const [state, setState] = useState(bluetoothPrinterService.getState());
   const [isScanning, setIsScanning] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
 
@@ -40,8 +41,18 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSelectPrinter = (printerId: string) => {
+  const handleSelectPrinter = async (printerId: string) => {
+    const printer = state.savedPrinters.find((p) => p.id === printerId);
+    if (!printer) return;
     bluetoothPrinterService.setActivePrinter(printerId);
+    setIsConnecting(true);
+    try {
+      await bluetoothPrinterService.connectPrinter(printer.address);
+    } catch {
+      // Connection error is non-fatal here; user can retry
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handlePaperWidthChange = (width: PaperWidth) => {
@@ -56,23 +67,14 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
     setIsScanning(true);
     setScanMessage(null);
     try {
-      if (bluetoothPrinterService.isWebBluetoothAvailable()) {
-        const dev = await bluetoothPrinterService.scanForBluetoothDevice();
-        if (dev) {
-          setScanMessage(`Connected to ${dev.name}!`);
-        } else {
-          setScanMessage('Scanning cancelled.');
-        }
+      const devices = await bluetoothPrinterService.discoverPairedDevices();
+      if (devices.length > 0) {
+        setScanMessage(`Found ${devices.length} paired Bluetooth printer${devices.length === 1 ? '' : 's'}.`);
       } else {
-        // Provide helpful simulation & discovery of paired devices
-        setTimeout(() => {
-          setScanMessage('Listed 5 paired thermal printers ready for ESC/POS.');
-          setIsScanning(false);
-        }, 800);
-        return;
+        setScanMessage('No paired printers found. Pair your thermal printer in Android Bluetooth Settings first.');
       }
     } catch (err: any) {
-      setScanMessage(err?.message || 'Bluetooth connection failed.');
+      setScanMessage(err?.message || 'Bluetooth scan failed.');
     } finally {
       setIsScanning(false);
     }
