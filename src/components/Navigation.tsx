@@ -38,7 +38,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   return (
     <>
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 bg-white border-b border-[#E2E4E8] px-4 py-2.5 flex items-center justify-between shadow-xs">
+      <header className="pt-[env(safe-area-inset-top,0px)] sticky top-0 z-30 bg-white border-b border-[#E2E4E8] px-4 py-2.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2.5">
           <img
             src="/logo.png"

@@ -23,7 +23,7 @@ export const ReceiptView: React.FC<ReceiptViewProps> = ({
       <div className="text-center pb-2 border-b border-dashed border-neutral-400">
         <div className="flex justify-center mb-1">
           <img
-            src="/receipt-logo.png"
+            src="/mezbaan-logo.png"
             alt="MEZBAAN"
             className="h-9 sm:h-10 w-auto max-w-[170px] object-contain mx-auto"
           />
