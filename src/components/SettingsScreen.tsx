@@ -91,7 +91,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     if (currentStaff.role !== 'ADMIN') return;
     const trimmed = gstinInput.trim().toUpperCase();
 
-    // Basic 15-character GSTIN validation if not blank
     if (trimmed !== '') {
       const is15AlphaNum = /^[0-9A-Z]{15}$/.test(trimmed);
       if (!is15AlphaNum) {
@@ -122,8 +121,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full pb-24">
-      {/* Screen Header */}
+    <div className="flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full pb-safe-nav">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-[#1E1E24] tracking-tight">Settings</h2>
@@ -137,7 +135,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </div>
 
-      {/* Floating feedback toast */}
       {savedFeedback && (
         <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -146,7 +143,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       )}
 
       <div className="space-y-4">
-        {/* 1. Tax & Billing Settings */}
         <div className="bg-white rounded-2xl border border-[#E2E4E8] p-4 sm:p-5 shadow-xs">
           <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#E2E4E8]">
             <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center text-[#FF6B35]">
@@ -181,12 +177,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 aria-hidden="true"
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
                   gstEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`}
+                }`
               />
             </button>
           </div>
 
-          {/* Editable GST Percentage */}
           <div className="pt-3 mt-3 border-t border-[#E2E4E8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <label htmlFor="gst-percentage-input" className="text-xs font-bold text-[#1E1E24] block cursor-pointer">
@@ -236,7 +231,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
         </div>
 
-        {/* 2. Stock & Inventory Warning Settings */}
         <div className="bg-white rounded-2xl border border-[#E2E4E8] p-4 sm:p-5 shadow-xs">
           <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#E2E4E8]">
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
@@ -302,7 +296,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
         </div>
 
-        {/* 3. Thermal Receipt Printer Configuration */}
         <div className="bg-white rounded-2xl border border-[#E2E4E8] p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E2E4E8]">
             <div className="flex items-center gap-2">
@@ -347,7 +340,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
         </div>
 
-        {/* 4. Restaurant Profile & Room Database Maintenance */}
         <div className="bg-white rounded-2xl border border-[#E2E4E8] p-4 sm:p-5 shadow-xs">
           <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#E2E4E8]">
             <div className="w-8 h-8 rounded-xl bg-neutral-100 flex items-center justify-center text-[#1E1E24]">
@@ -428,7 +420,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           </div>
 
-          {/* Reset Official Menu Action */}
           <div className="pt-2 border-t border-[#E2E4E8]">
             <div className="flex items-center justify-between gap-3">
               <div>

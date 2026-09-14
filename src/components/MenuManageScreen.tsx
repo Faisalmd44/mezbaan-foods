@@ -43,11 +43,9 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<StockFilter>('ALL');
 
-  // Configurable low stock threshold (e.g. default 5 units, persisted)
   const [lowStockThreshold, setLowStockThreshold] = useState<number>(() => getLowStockThreshold());
   const [showThresholdConfig, setShowThresholdConfig] = useState(false);
 
-  // New item form state
   const [name, setName] = useState('');
   const [priceText, setPriceText] = useState('');
   const [categoryId, setCategoryId] = useState<number>(categories[0]?.id || 1);
@@ -62,7 +60,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
     saveLowStockThreshold(clamped);
   };
 
-  // Calculate stock counts
   const lowStockItems = menuItems.filter(item => {
     const qty = item.stockQuantity ?? 15;
     return item.isAvailable && qty <= lowStockThreshold && qty > 0;
@@ -73,18 +70,15 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
     return !item.isAvailable || qty === 0;
   });
 
-  // Filter items according to both category and status filter
   const filteredItems = menuItems.filter(item => {
     const qty = item.stockQuantity ?? 15;
     const isOut = !item.isAvailable || qty === 0;
     const isLow = item.isAvailable && qty <= lowStockThreshold && qty > 0;
 
-    // Category filter
     if (selectedCategoryFilter !== null && item.categoryId !== selectedCategoryFilter) {
       return false;
     }
 
-    // Status filter
     if (statusFilter === 'LOW_STOCK' && !isLow) {
       return false;
     }
@@ -120,8 +114,7 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full pb-24">
-      {/* Header */}
+    <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full pb-safe-nav">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h2 className="text-xl font-bold text-[#1E1E24] tracking-tight">Menu Stock & Inventory</h2>
@@ -131,7 +124,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Reset to Official Menu */}
           {onResetOfficialMenu && (
             <button
               type="button"
@@ -148,7 +140,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
             </button>
           )}
 
-          {/* Toggle Threshold Configuration */}
           <button
             type="button"
             onClick={() => setShowThresholdConfig(!showThresholdConfig)}
@@ -163,7 +154,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
             <span>Alert Threshold ({lowStockThreshold} units)</span>
           </button>
 
-          {/* New Item Button */}
           <button
             type="button"
             onClick={() => setShowAddDialog(true)}
@@ -175,7 +165,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         </div>
       </div>
 
-      {/* Configurable Low Stock Threshold Panel */}
       {showThresholdConfig && (
         <div className="mb-4 p-4 bg-white rounded-2xl border border-[#E2E4E8] shadow-xs animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -189,7 +178,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
               </p>
             </div>
 
-            {/* Threshold Adjuster & Presets */}
             <div className="flex items-center gap-2">
               <div className="flex items-center bg-[#F8F9FA] border border-[#E2E4E8] rounded-xl p-1">
                 <button
@@ -216,7 +204,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                 </button>
               </div>
 
-              {/* Quick Preset Buttons */}
               <div className="flex gap-1">
                 {[3, 5, 8, 10].map((preset) => (
                   <button
@@ -238,7 +225,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         </div>
       )}
 
-      {/* Status Summary & Quick Filter Tabs */}
       <div className="grid grid-cols-3 gap-2.5 mb-3.5">
         <button
           type="button"
@@ -299,7 +285,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         </button>
       </div>
 
-      {/* Category filter pills */}
       <div className="flex gap-2 overflow-x-auto pb-3 mb-2 no-scrollbar">
         <button
           type="button"
@@ -331,7 +316,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         })}
       </div>
 
-      {/* Active Filter Note */}
       {(statusFilter !== 'ALL' || selectedCategoryFilter !== null) && (
         <div className="flex items-center justify-between mb-3 px-2 text-xs text-[#6B6B75]">
           <span>
@@ -350,7 +334,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         </div>
       )}
 
-      {/* Items List */}
       <div className="space-y-2.5">
         {filteredItems.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[#E2E4E8] p-8 text-center">
@@ -382,7 +365,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                     : 'bg-white border border-[#E2E4E8] hover:border-neutral-300 shadow-xs'
                 }`}
               >
-                {/* Left: Item Info, Badges & Warning */}
                 <div className="flex items-start sm:items-center gap-3 min-w-0">
                   <FoodItemImage
                     name={item.name}
@@ -400,7 +382,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                         {categoryName}
                       </span>
 
-                      {/* 'Low Stock' Warning Badge System */}
                       {isLowStock && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300/80 shadow-2xs">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -408,7 +389,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                         </span>
                       )}
 
-                      {/* Out of Stock Badge */}
                       {isOutOfStock && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-red-100 text-red-800 border border-red-200">
                           <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
@@ -416,7 +396,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                         </span>
                       )}
 
-                      {/* Healthy Stock Badge */}
                       {!isLowStock && !isOutOfStock && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium text-[#6B6B75] bg-[#F8F9FA] border border-[#E2E4E8]">
                           <Package className="w-3 h-3 text-[#6B6B75]" />
@@ -438,9 +417,7 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                   </div>
                 </div>
 
-                {/* Right: Stock Adjustment Stepper & Availability Switch */}
                 <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E2E4E8]/60 shrink-0">
-                  {/* Stock Quantity Stepper */}
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] text-[#6B6B75] font-semibold hidden md:inline">Stock:</span>
                     <div className="flex items-center bg-[#F8F9FA] border border-[#E2E4E8] rounded-xl p-0.5">
@@ -471,7 +448,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
                     </div>
                   </div>
 
-                  {/* Stock Availability Toggle Switch */}
                   <div className="flex items-center gap-2 pl-2 border-l border-[#E2E4E8]">
                     <span
                       className={`text-xs font-semibold ${
@@ -498,7 +474,6 @@ export const MenuManageScreen: React.FC<MenuManageScreenProps> = ({
         )}
       </div>
 
-      {/* Add New Item Modal */}
       {showAddDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
