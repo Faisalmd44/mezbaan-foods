@@ -307,7 +307,8 @@ class BluetoothPrinterService {
     addLine(separator);
 
     addBytes(0x1B, 0x61, 0x01);
-    addLine('Thank you for dining with MEZBAAN!');
+    addLine('Thank you for dining with');
+    addLine('MEZBAAN!');
     addLine('* * * HAVE A GREAT DAY * * *');
 
     addBytes(0x1B, 0x64, 0x04);
