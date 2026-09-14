@@ -19,6 +19,16 @@
   scrollbar-width: none;
 }
 
+/* Android safe-area padding utility for scrollable content above fixed bottom nav */
+.pb-safe-nav {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 640px) {
+  .pb-safe-nav {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Thermal receipt print stylesheet */
 @media print {
   body * {

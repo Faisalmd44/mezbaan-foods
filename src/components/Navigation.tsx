@@ -123,7 +123,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </header>
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E2E4E8] py-2 px-4 flex justify-around items-center shadow-lg sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-2xl sm:border">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E2E4E8] py-2 px-4 flex justify-around items-center shadow-lg sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-2xl sm:border" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {navItems.map(({ screen, label, icon: Icon }) => {
           const isSelected = currentScreen === screen;
           return (
@@ -140,7 +140,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <Icon
                 className={`w-5 h-5 transition-colors ${
                   isSelected ? 'text-[#FF6B35]' : 'text-[#6B6B75]'
-                }`}
+                }`
               />
               <span className="text-[11px] sm:text-xs">{label}</span>
             </button>
