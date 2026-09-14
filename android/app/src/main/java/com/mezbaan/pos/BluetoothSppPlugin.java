@@ -282,7 +282,8 @@ public class BluetoothSppPlugin extends Plugin {
             result.put("success", true);
             result.put("message", "Printed " + bytes.length + " bytes");
             call.resolve(result);
-        } catch (IOException e) {
+        } catch (JSONException | IOException e) {
+            Log.e(TAG, "Print failed", e);
             call.reject("Print failed: " + e.getMessage());
             Log.e(TAG, "Print failed", e);
             closeConnection();
