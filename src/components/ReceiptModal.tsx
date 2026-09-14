@@ -72,6 +72,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     const gstinText = receipt.gstin !== undefined ? receipt.gstin.trim() : '07AAAAA0000A1Z5';
     const lines = [
       "MEZBAAN",
+              <img src="/mezbaan-logo.png" alt="MEZBAAN" className="h-12 w-auto object-contain mx-auto mb-1" />
       "Fast Food & Quick Bites",
       ...(gstinText ? [`GSTIN: ${gstinText}`] : []),
       `Bill No: ${receipt.billNumber}`,
