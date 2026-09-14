@@ -41,7 +41,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       <header className="pt-[env(safe-area-inset-top,0px)] sticky top-0 z-30 bg-white border-b border-[#E2E4E8] px-4 py-2.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2.5">
           <img
-            src="/logo.png"
+            src="/mezbaan-logo.png"
             alt="Mezbaan"
             className="w-8 h-8 rounded-lg object-contain bg-[#1E1E24] p-1"
             onError={(e) => {
