@@ -19,7 +19,7 @@ import { exportAppDataJSON, importAppDataJSON,
   getRestaurantGstin,
   saveRestaurantGstin
 } from '../data/storage';
-import { exportAppDataJSON, importAppDataJSON, bluetoothPrinterService } from '../utils/bluetoothPrinterService';
+import { bluetoothPrinterService } from '../utils/bluetoothPrinterService';
 
 interface SettingsScreenProps {
   currentStaff: Staff;
