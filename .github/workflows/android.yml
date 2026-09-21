@@ -35,11 +35,16 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Setup Consistent Debug Keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
+
       - name: Build Debug APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          BUILD_NUMBER=${{ github.run_number }} ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

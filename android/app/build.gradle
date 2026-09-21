@@ -7,7 +7,7 @@ android {
         applicationId "com.mezbaan.pos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode Integer.parseInt(System.getenv("BUILD_NUMBER") ?: "${System.currentTimeMillis() / 1000}".toInteger())
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
