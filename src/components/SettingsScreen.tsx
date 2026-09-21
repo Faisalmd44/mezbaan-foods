@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Staff } from '../types';
-import {
+import { exportAppDataJSON, importAppDataJSON, Staff } from '../types';
+import { exportAppDataJSON, importAppDataJSON,
   Percent,
   Sliders,
   Printer,
@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Check
 } from 'lucide-react';
-import {
+import { exportAppDataJSON, importAppDataJSON,
   getLowStockThreshold,
   saveLowStockThreshold,
   getGstEnabled,
@@ -19,7 +19,7 @@ import {
   getRestaurantGstin,
   saveRestaurantGstin
 } from '../data/storage';
-import { bluetoothPrinterService } from '../utils/bluetoothPrinterService';
+import { exportAppDataJSON, importAppDataJSON, bluetoothPrinterService } from '../utils/bluetoothPrinterService';
 
 interface SettingsScreenProps {
   currentStaff: Staff;
@@ -452,6 +452,62 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    
+      {/* Data Backup & Restore Card */}
+      <div className="bg-white rounded-2xl border border-[#E2E4E8] p-5 shadow-xs mb-5">
+        <h3 className="text-base font-bold text-[#1E1E24] mb-1">Data Backup & Safety</h3>
+        <p className="text-xs text-[#6B6B75] mb-4">
+          Save a copy of your orders, sales records, and menu to your phone memory to prevent data loss during reinstalls.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              const json = exportAppDataJSON();
+              const blob = new Blob([json], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              const dateStr = new Date().toISOString().slice(0, 10);
+              a.href = url;
+              a.download = `Mezbaan_Backup_${dateStr}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              alert("Backup file downloaded successfully to your phone!");
+            }}
+            className="flex-1 bg-[#1E1E24] hover:bg-neutral-800 text-white font-semibold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2"
+          >
+            <span>📥 Export / Download Backup</span>
+          </button>
+
+          <label className="flex-1 bg-[#F4F5F7] hover:bg-[#E2E4E8] text-[#1E1E24] font-semibold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer border border-[#E2E4E8]">
+            <span>📤 Restore Data from File</span>
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const content = ev.target?.result as string;
+                  if (importAppDataJSON(content)) {
+                    alert("Data restored successfully! The app will reload now.");
+                    window.location.reload();
+                  } else {
+                    alert("Invalid backup file. Please select a valid Mezbaan backup file.");
+                  }
+                };
+                reader.readAsText(file);
+              }}
+            />
+          </label>
+        </div>
+      </div>
+
+</div>
   );
 };

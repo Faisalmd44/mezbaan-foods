@@ -417,3 +417,52 @@ export function createBillTransaction(
     gstin: currentGstin
   };
 }
+
+// --- DATA BACKUP & RESTORE UTILITIES ---
+export function exportAppDataJSON(): string {
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    categories: getCategories(),
+    menuItems: getMenuItems(),
+    staff: getStaffList(),
+    bills: getBills(),
+    gstEnabled: getGstEnabled(),
+    gstRate: getGstRate(),
+    gstin: getGstin()
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
+export function importAppDataJSON(jsonStr: string): boolean {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (!data || typeof data !== "object") return false;
+    
+    if (Array.isArray(data.categories)) {
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(data.categories));
+    }
+    if (Array.isArray(data.menuItems)) {
+      localStorage.setItem(STORAGE_KEYS.MENU_ITEMS, JSON.stringify(data.menuItems));
+    }
+    if (Array.isArray(data.staff)) {
+      localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(data.staff));
+    }
+    if (Array.isArray(data.bills)) {
+      localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify(data.bills));
+    }
+    if (typeof data.gstEnabled === "boolean") {
+      setGstEnabled(data.gstEnabled);
+    }
+    if (typeof data.gstRate === "number") {
+      setGstRate(data.gstRate);
+    }
+    if (typeof data.gstin === "string") {
+      setGstin(data.gstin);
+    }
+    return true;
+  } catch (e) {
+    console.error("Failed to import data:", e);
+    return false;
+  }
+}
