@@ -174,6 +174,9 @@ export function App() {
       cartLines
     );
 
+    // Refresh live bills state
+    setBills(getBills());
+
     // Deduct stock for ordered items
     const updatedMenu = menuItems.map(item => {
       const line = cartLines.find(l => l.itemId === item.id);
@@ -220,7 +223,7 @@ export function App() {
 
         {currentScreen === 'SALES' && (
           <SalesScreen
-            bills={bills}
+            bills={getBills()}
             onSelectReceipt={(receipt) => setLastReceipt(receipt)}
           />
         )}

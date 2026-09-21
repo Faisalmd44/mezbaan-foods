@@ -327,18 +327,18 @@ export const SalesScreen: React.FC<SalesScreenProps> = ({ bills, onSelectReceipt
               <div className="w-7 h-7 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center text-[#FF6B35]">
                 <TrendingUp className="w-4 h-4" />
               </div>
-              <h3 className="text-base font-bold text-[#1E1E24]">Revenue Per Day (Current Week)</h3>
+              <h3 className="text-base font-bold text-[#1E1E24]">Sales Overview</h3>
             </div>
             <p className="text-xs text-[#6B6B75] mt-1">
-              Interactive daily revenue distribution for Monday through Sunday
+              Revenue and transaction metrics for selected period
             </p>
           </div>
 
           {/* Quick Metrics Badges */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <div className="bg-[#F8F9FA] border border-[#E2E4E8] px-2.5 py-1 rounded-lg">
-              <span className="text-[#6B6B75] text-[11px] block">Week Total</span>
-              <span className="font-bold text-[#1E1E24]">₹{formatPrice(weekStats.totalRevenue)}</span>
+              <span className="text-[#6B6B75] text-[11px] block">Total Revenue</span>
+              <span className="font-bold text-[#1E1E24]">₹{formatPrice(scopeMetrics.total)}</span>
             </div>
 
             <div className="bg-[#F8F9FA] border border-[#E2E4E8] px-2.5 py-1 rounded-lg">

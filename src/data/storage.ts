@@ -326,19 +326,17 @@ export function generateSampleWeeklyBills(): BillWithItems[] {
 }
 
 export function getBills(): BillWithItems[] {
-  const data = localStorage.getItem(STORAGE_KEYS.BILLS);
-  if (!data) {
-    const samples = generateSampleWeeklyBills();
-    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify([]));
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.BILLS);
+    if (!data) {
+      return [];
+    }
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error("Failed to load bills from localStorage", e);
     return [];
   }
-  const parsed: BillWithItems[] = JSON.parse(data);
-  if (!Array.isArray(parsed) || parsed.length === 0) {
-    const samples = generateSampleWeeklyBills();
-    localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify([]));
-    return [];
-  }
-  return parsed;
 }
 
 export function generateNextBillNumber(): string {
