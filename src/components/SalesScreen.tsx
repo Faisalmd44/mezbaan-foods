@@ -48,6 +48,8 @@ interface DayData {
 
 export const SalesScreen: React.FC<SalesScreenProps> = ({ bills, onSelectReceipt }) => {
   // Selected day filter: null means "All This Week" or specific dateKey (e.g., '2026-09-13')
+  type DateRangeFilter = 'today' | 'week' | 'month' | 'all';
+  const [dateFilter, setDateFilter] = useState<DateRangeFilter>('week');
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
   // Helper to get local date key "YYYY-MM-DD"
@@ -146,15 +148,36 @@ export const SalesScreen: React.FC<SalesScreenProps> = ({ bills, onSelectReceipt
     };
   }, [currentWeekDays]);
 
-  // Filter bills list based on selectedDayKey
+  // Filter bills list based on dateFilter and optional selectedDayKey
   const displayedBills = useMemo(() => {
-    if (!selectedDayKey) {
-      // Show all bills for the current week
+    if (selectedDayKey) {
+      return bills.filter((b) => getDateKey(b.bill.timestamp) === selectedDayKey);
+    }
+
+    const now = new Date();
+    const todayStr = getDateKey(now.getTime());
+
+    if (dateFilter === 'today') {
+      return bills.filter((b) => getDateKey(b.bill.timestamp) === todayStr);
+    }
+
+    if (dateFilter === 'week') {
       const weekKeys = new Set(currentWeekDays.map((d) => d.dateKey));
       return bills.filter((b) => weekKeys.has(getDateKey(b.bill.timestamp)));
     }
-    return bills.filter((b) => getDateKey(b.bill.timestamp) === selectedDayKey);
-  }, [bills, selectedDayKey, currentWeekDays]);
+
+    if (dateFilter === 'month') {
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      return bills.filter((b) => {
+        const d = new Date(b.bill.timestamp);
+        return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      });
+    }
+
+    // 'all' - All Historical Bills preserved
+    return bills;
+  }, [bills, selectedDayKey, currentWeekDays, dateFilter]);
 
   // Selected scope metrics
   const scopeMetrics = useMemo(() => {
@@ -267,11 +290,31 @@ export const SalesScreen: React.FC<SalesScreenProps> = ({ bills, onSelectReceipt
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E2E4E8] text-xs font-semibold text-[#1E1E24] shadow-2xs">
-            <Calendar className="w-3.5 h-3.5 text-[#FF6B35]" />
-            <span>This Week ({weekStats.dateRangeStr})</span>
-          </div>
+        <div className="flex flex-wrap items-center gap-1.5 bg-[#F4F5F7] p-1 rounded-xl border border-[#E2E4E8]">
+          {(
+            [
+              { id: 'today', label: 'Today' },
+              { id: 'week', label: 'This Week' },
+              { id: 'month', label: 'This Month' },
+              { id: 'all', label: 'All Time' }
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                setDateFilter(t.id);
+                setSelectedDayKey(null);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                dateFilter === t.id && !selectedDayKey
+                  ? 'bg-white text-[#FF6B35] shadow-xs font-bold'
+                  : 'text-[#6B6B75] hover:text-[#1E1E24]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
